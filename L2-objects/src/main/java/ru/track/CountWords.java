@@ -1,6 +1,8 @@
 package ru.track;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.BufferedReader;
 
 
 /**
@@ -29,7 +31,9 @@ public class CountWords {
     String skipWord;
 
     public CountWords(String skipWord) {
+
         this.skipWord = skipWord;
+
     }
 
     /**
@@ -40,7 +44,26 @@ public class CountWords {
      * @return - целое число - сумма всех чисел из файла
      */
     public long countNumbers(File file) throws Exception {
-        return 0;
+        StringBuilder builder = new StringBuilder();
+        FileReader fr = new FileReader(file);
+        BufferedReader br = new BufferedReader(fr);
+        String currLine;
+        int num;
+        long sum=0;
+        while ((currLine = br.readLine())!=null) {
+            try {
+                num = Integer.parseInt(currLine);
+                sum += num;
+            } catch (NumberFormatException e) {
+
+            }
+
+
+        }
+
+
+
+        return sum;
     }
 
 
@@ -52,7 +75,35 @@ public class CountWords {
      * @return - результирующая строка
      */
     public String concatWords(File file) throws Exception {
-        return null;
+        StringBuilder builder = new StringBuilder();
+        FileReader fr = new FileReader(file);
+        BufferedReader br = new BufferedReader(fr);
+        String currLine;
+        int num;
+        while ((currLine = br.readLine())!=null) {
+            try {
+                num = Integer.parseInt(currLine);
+
+            } catch (NumberFormatException e) {
+                if (!(currLine.equals(this.skipWord))) {
+                    builder.append(currLine);
+                    builder.append(" ");
+                }
+
+            }
+
+
+        }
+        String result = builder.toString();
+
+        return result;
+    }
+
+    public static void main(String[] args) throws Exception {
+        File src = new File("/home/chern/tehnotr/track18-spring/L2-objects/words.txt");
+        CountWords cw = new CountWords("");
+        System.out.println(cw.concatWords(src));
+
     }
 
 }
