@@ -4,6 +4,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
@@ -60,9 +61,14 @@ public class JsonWriter {
     @NotNull
     private static String toJsonArray(@NotNull Object object) {
         int length = Array.getLength(object);
-        // TODO: implement!
-
-        return null;
+        StringBuilder builder = new StringBuilder();
+        builder.append('[');
+        for (int j=0; j<length; j++) {
+            builder.append(toJson(Array.get(object, j)));
+            if (j<length-1) builder.append(",");
+        }
+        builder.append("]");
+        return builder.toString();
     }
 
     /**
@@ -82,9 +88,13 @@ public class JsonWriter {
      */
     @NotNull
     private static String toJsonMap(@NotNull Object object) {
-        // TODO: implement!
+        Map myjson = (Map) object;
+        Map newjson = new HashMap<String, String>();
 
-        return null;
+        for (Object key : myjson.keySet()){
+            newjson.put(key, toJson(myjson.get(key)));
+        }
+        return formatObject(newjson);
         // Можно воспользоваться этим методом, если сохранить все поля в новой мапе уже в строковом представлении
 //        return formatObject(stringMap);
     }
@@ -108,10 +118,51 @@ public class JsonWriter {
     @NotNull
     private static String toJsonObject(@NotNull Object object) {
         Class clazz = object.getClass();
-        // TODO: implement!
+        StringBuilder builder = new StringBuilder();
+        int numFields = clazz.getDeclaredFields().length;
+        builder.append('{');
+        for (int i=0; i<numFields; i++){
+            Field f = clazz.getDeclaredFields()[i];
+            f.setAccessible(true);
+            try {
+                if(clazz.isAnnotationPresent(JsonNullable.class)){
+                    if (f.isAnnotationPresent(SerializedTo.class)) {
+                        builder.append(String.format("\"%s\"", f.getAnnotation(SerializedTo.class).value()));
+                        builder.append(':');
+                        builder.append(toJson(f.get(object)));
+                        builder.append(',');
+                    } else {
+                        builder.append(String.format("\"%s\"", f.getName()));
+                        builder.append(':');
+                        builder.append(toJson(f.get(object)));
+                        builder.append(',');
+                    }
+                } else {
+                    if (f.isAnnotationPresent(SerializedTo.class)) {
+                        if (f.get(object)!=null) {
+                            builder.append(String.format("\"%s\"", f.getAnnotation(SerializedTo.class).value()));
+                            builder.append(':');
+                            builder.append(toJson(f.get(object)));
+                            builder.append(',');
+                        }
 
+                    } else {
+                        if (f.get(object)!=null) {
+                            builder.append(String.format("\"%s\"", f.getName()));
+                            builder.append(':');
+                            builder.append(toJson(f.get(object)));
+                            builder.append(',');
+                        }
+                    }
+                }
+            } catch (Exception e){
 
-        return null;
+            }
+
+        }
+        builder.delete(builder.length()-1, builder.length());
+        builder.append('}');
+        return builder.toString();
     }
 
     /**
